@@ -1,0 +1,135 @@
+﻿<Window x:Class="KarginScales.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:view="clr-namespace:KarginScales.Views"
+        xmlns:vm="clr-namespace:KarginScales.ViewModels"
+        xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
+        mc:Ignorable="d"
+        Title="Потенциометр" Height="600" Width="900"
+        WindowStartupLocation="CenterScreen">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto"></RowDefinition>
+            <RowDefinition></RowDefinition>
+        </Grid.RowDefinitions>
+
+        <Menu Grid.Row="0">
+            <MenuItem Header="О программе" FontSize="15">
+                <MenuItem Header="GitHub">
+                    <TextBox IsReadOnly="True" Padding="3">https://github.com/GrigKusya</TextBox>
+                </MenuItem>
+                <MenuItem Header="Телеграм">
+                    <TextBox IsReadOnly="True" Padding="3">@Green_fighter1</TextBox>
+                </MenuItem>
+            </MenuItem>
+        </Menu>
+        
+        <Grid Grid.Row="1" Background="LightGray">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"></ColumnDefinition>
+            <ColumnDefinition Width="0.75*"></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.Column="1">
+            <TextBlock Margin="0 23 0 10" Style="{StaticResource styleTextBlockTheme}">Приборная панель</TextBlock>
+            <StackPanel Margin="10" Orientation="Horizontal">
+                <TextBlock VerticalAlignment="Center" Style="{StaticResource styleTextBlockSelected}">Выбор образца:</TextBlock>
+                <ComboBox x:Name="cmbPoly" Margin="10 0 0 0" Width="200"
+                          ItemsSource="{Binding Polymers}"
+                          SelectedItem="{Binding SelectedPolymer}"
+                          DisplayMemberPath="Name"></ComboBox>
+            </StackPanel>
+                <Grid Margin="0 20 0 0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition></ColumnDefinition>
+                        <ColumnDefinition></ColumnDefinition>
+                    </Grid.ColumnDefinitions>
+                    <view:LCDData Grid.Column="0" 
+              Title="Максимальный объём" 
+              Data="{Binding SelectedPolymer.MaxT}"
+              TextForeground="Red"/>
+                    <view:LCDData Grid.Column="1"
+              Title="Минимальный объём" 
+              Data="0.1"
+              TextForeground="Red"/>
+                </Grid>
+                <TextBlock Margin="0 40 0 20" Style="{StaticResource styleTextBlockTheme}">Показания прибора (pH)</TextBlock>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition></ColumnDefinition>
+                        <ColumnDefinition></ColumnDefinition>
+                    </Grid.ColumnDefinitions>
+
+                    <view:LCDData x:Name="curr" 
+                  Grid.Column="0" 
+                  Title="Текущий объём титранта"
+                  Data="{Binding CurrentTemperature}" 
+                  TextForeground="LawnGreen"/>
+                    <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                        <view:LCDData x:Name="setup" 
+                      Title="Установка объёма титранта" 
+                      Data="{Binding SetupTemperature, Mode=TwoWay}"
+                      TextForeground="Yellow"/>
+                        <Grid Margin="7">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition></ColumnDefinition>
+                                <ColumnDefinition></ColumnDefinition>
+                            </Grid.ColumnDefinitions>
+                            <Button Margin="3" Grid.Column="0" Command="{Binding RaiseTemp}" FontSize="25">🡅</Button>
+                            <Button Margin="3" Grid.Column="1" Command="{Binding LowerTemp}" FontSize="25">🡇</Button>
+                        </Grid>
+                    </StackPanel>
+                </Grid>
+                <view:LCDData Margin="0 20 0 0" 
+              Title="pH" 
+              Data="{Binding Gamma}"
+              TextForeground="DarkOrange"/>
+                <Button Margin="0 25 0 0" Content="Пуск" Height="45" MaxWidth="150" 
+                    Command="{Binding StartMeasurement}" FontSize="20" FontWeight="Bold"></Button>
+        </StackPanel>
+
+        <TabControl Grid.Column="0">
+            <TabItem Header="Потенциометр">
+                <view:Scales></view:Scales>
+            </TabItem >
+            <TabItem Header="Данные измерения">
+                    <DataGrid ItemsSource="{Binding SelectedPolymer.MeasuredData}" AutoGenerateColumns="False"
+                        IsReadOnly="True" CanUserSortColumns="False" HorizontalGridLinesBrush="{x:Null}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Объём титранта, мл" Width="*" 
+                            Binding="{Binding Temperature, StringFormat={}{0:F1}}"/>
+                            <DataGridTextColumn Header="pH" Width="*" 
+                            Binding="{Binding Gamma, StringFormat={}{0:F3}}"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </TabItem>
+            <TabItem Header="График" Height="20" VerticalAlignment="Bottom">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition></RowDefinition>
+                        <RowDefinition Height="auto"></RowDefinition>
+                    </Grid.RowDefinitions>
+
+                    <lvc:CartesianChart Grid.Row="0" Series="{Binding Plot.Series}"
+                    XAxes="{Binding Plot.XAxis}"
+                    YAxes="{Binding Plot.YAxis}" 
+                    ZoomMode="None"/>
+
+                    <StackPanel Margin="10" Grid.Row="1" Orientation="Horizontal">
+                        <PasswordBox x:Name="txtPassword" Margin="0 0 5 0" Width="100"
+                                     VerticalContentAlignment="Center" 
+                                     FontSize="16"
+                                     Padding="5"
+                                     view:PasswordBoxHelper.Password="{Binding Password}"></PasswordBox>
+                        <Button Margin="5 0 0 0" Padding="5" FontSize="14" Command="{Binding ShowTeacherChart}" CommandParameter="{Binding Password}">Графики для проверки студента</Button>
+                        <Button Margin="5 0 0 0" Padding="5" FontSize="14" Command="{Binding HiddenTeachetChart}">Скрыть графики</Button>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+        </TabControl>
+    </Grid>
+    </Grid>
+</Window>
